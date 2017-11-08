@@ -9,6 +9,7 @@ const port = 3000;
 
 const cnxString = require('./cnx.json');
 
+
 // Connection to the database
 const con = mysql.createConnection(cnxString);
 const news = new Array;
