@@ -1,0 +1,42 @@
+<% include partials/header %>
+<h1><%= title %></h1>
+<table cellspacing="5">
+  <tr>
+    <td valign="top">
+      <form method="GET" action="/news/displayAdd">
+        <input type="submit" value="Add a news" />
+      </form>
+      <% if(news) { %>
+      <ul style="list-style: none; padding: 0;">
+      <% for(var i = 0; i < news.length; i++) { %>
+        <li style="padding-top: 10px;">
+          <a href="/news/delete?id=<%= news[i].ID %>" style="text-decoration: none;">x</a>
+          <a href="/news/update?index=<%= i %>" style="text-decoration: none;">
+            <%= news[i].Titre %>
+          </a>
+        </li>
+      <% } %>
+      </ul>
+      <% } %>
+    </td>
+    <td valign="top">
+      <form method="POST" action="/news/add">
+        <input type="hidden" name="ID" value="<%= newNews.ID %>" />
+        Titre</br><input type="text" name="Titre" value="<%= newNews.Titre %>" />
+        <span style="color: red;">
+          <% if(errors && errors.Titre) { %>
+            <%= errors.Titre.msg %>
+          <% } %>
+        </span><br />
+        Contenu</br><textarea name="Contenu" style="width: 300px; height: 150px;"><%= newNews.Contenu %></textarea>
+        <span style="color: red;">
+          <% if(errors && errors.Contenu) { %>
+            <%= errors.Contenu.msg %>
+          <% } %>
+        </span><br /><br />
+        <input type="submit" />
+      </form>
+    </td>
+  </tr>
+</table>
+<% include partials/footer %>

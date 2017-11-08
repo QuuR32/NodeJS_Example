@@ -1,0 +1,28 @@
+{
+  "name": "nodejs_example",
+  "version": "1.0.0",
+  "description": "simple test app",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuuR32/NodeJS_Example.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/QuuR32/NodeJS_Example/issues"
+  },
+  "homepage": "https://github.com/QuuR32/NodeJS_Example#readme",
+  "dependencies": {
+    "body-parser": "*",
+    "ejs": "^2.5.7",
+    "express": "^4.16.2",
+    "express-validator": "^4.3.0",
+    "mongodb": "^2.2.33",
+    "mongodb-stitch": "^1.1.8",
+    "mysql": "^2.15.0"
+  }
+}
