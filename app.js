@@ -2,26 +2,76 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { check, validationResult } = require('express-validator/check');
-const mysql = require('mysql');
+const mongodb = require('mongodb');
+const MongoClient = mongodb.MongoClient;
+const assert = require('assert');
 
 const app = express();
 const port = 3000;
 
-const cnxString = require('./cnx.json');
-
+var uri = "mongodb://localhost:27017/test?authSource=admin";
 
 // Connection to the database
-const con = mysql.createConnection(cnxString);
 const news = new Array;
 
-/*
-const logger = (req, res, next) => {
-	console.log('Logging...');
-	next();
-}
+var fillNews = (callback) => {
+	news.length = 0;
+	MongoClient.connect(uri, (err, db) => {
+		assert.equal(null, err);
+		var cursor = db.collection('news').find();
+		cursor.each((err, doc) => {
+			assert.equal(err, null);
+			if (doc != null) {
+				news.push(doc);
+			}
+		});
+		if (callback) callback();
+		db.close();
+	});
+};
 
-app.use(logger);
-*/
+var insertNews = (document, callback) => {
+	MongoClient.connect(uri, (err, db) => {
+		assert.equal(null, err);
+		db.collection('news').insertOne(document, (err, result) => {
+			assert.equal(err, null);
+			if (callback) callback(result.insertedId);
+  	});
+		db.close();
+	});
+};
+
+var updateNews = (document, callback) => {
+	MongoClient.connect(uri, (err, db) => {
+		assert.equal(null, err);
+		db.collection('news').updateOne(
+			{ _id: new mongodb.ObjectID(document._id) },
+			{
+				$set: {
+					"Titre": document.Titre,
+					"Contenu": document.Contenu
+				}
+			}, (err, results) => {
+			if (callback) callback();
+			db.close();
+		});
+	});
+};
+
+var removeNews = (id, callback) => {
+	MongoClient.connect(uri, (err, db) => {
+		assert.equal(null, err);
+		db.collection('news').deleteOne({ _id: new mongodb.ObjectID(id) }, (err, results) => {
+			console.log(results);
+			assert.equal(null, err);
+			fillNews();
+      if (callback) callback();
+    });
+		db.close();
+	});
+};
+
+fillNews();
 
 // View Engine
 app.set('view engine', 'ejs');
@@ -41,22 +91,11 @@ app.use((req, res, next) => {
 });
 app.use((req, res, next) => {
 	res.locals.newNews = {
-		ID: -1,
+		_id: -1,
 		Titre: null,
 		Contenu : null
 	};
 	next();
-});
-
-con.connect((err) => {
-	if (err) throw err;
-	console.log("Connected!");
-	con.query("SELECT * FROM news", function (err, result, fields) {
-		if (err) throw err;
-		for(let i = 0; i < result.length; i++) {
-			news.push(result[i]);
-		}
-	});
 });
 
 app.get('/', (req, res) => {
@@ -77,7 +116,7 @@ app.post('/news/add', [
 	const errors = validationResult(req);
 
 	entryNews = {
-		ID: req.body.ID,
+		_id: req.body._id,
 		Titre: req.body.Titre,
 		Contenu : req.body.Contenu
 	};
@@ -90,25 +129,25 @@ app.post('/news/add', [
 			errors: errors.mapped()
 		});
 	} else {
-		if (entryNews.ID == -1) {
-			var sql = "INSERT INTO news (Titre, Contenu) VALUES ('" + entryNews.Titre + "', '" + entryNews.Contenu + "')";
-		  con.query(sql, function (err, result) {
-		    if (err) throw err;
-		    entryNews.ID = result.insertId;
+		if (entryNews._id == -1) {
+			document = {
+				"Titre" : entryNews.Titre,
+				"Contenu" : entryNews.Contenu
+			};
+			insertNews(document, (insertedId) => {
+		    entryNews._id = insertedId;
 				news.push(entryNews);
 				res.redirect('/');
-		  });
+			});
 		} else {
-			var sql = "UPDATE news SET Titre = '" + entryNews.Titre + "', Contenu = '" + entryNews.Contenu + "' WHERE ID = " + entryNews.ID;
-		  con.query(sql, function (err, result) {
-		    if (err) throw err;
-		    for(let i = 0; i < news.length; i++) {
-					if (news[i].ID == entryNews.ID) {
+			updateNews(entryNews, () => {
+				for(let i = 0; i < news.length; i++) {
+					if (news[i]._id == entryNews._id) {
 						news[i] = entryNews;
 					}
 				}
 				res.redirect('/');
-		  });
+			});
 		}
 	}
 });
@@ -122,17 +161,14 @@ app.get('/news/update', (req, res, next) => {
 });
 
 app.get('/news/delete', (req, res, next) => {
-	var sql = "DELETE FROM news WHERE ID = " + req.query.id;
-	con.query(sql, function (err, result) {
-		if (err) throw err;
-		for (var i = news.length - 1; i >= 0; --i) {
-		    if (news[i].ID == req.query.id) {
-		    		news.splice(i, 1);
-		    }
-		}
-		res.redirect('/');
+	removeNews(req.query.id, () => {
+			for (var i = news.length - 1; i >= 0; --i) {
+			    if (news[i]._id == req.query.id) {
+			    		news.splice(i, 1);
+			    }
+			}
+			res.redirect('/');
 	});
-
 });
 
 app.listen(port, () => {

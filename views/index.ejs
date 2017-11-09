@@ -10,7 +10,7 @@
       <ul style="list-style: none; padding: 0;">
       <% for(var i = 0; i < news.length; i++) { %>
         <li style="padding-top: 10px;">
-          <a href="/news/delete?id=<%= news[i].ID %>" style="text-decoration: none;">x</a>
+          <a href="/news/delete?id=<%= news[i]._id %>" style="text-decoration: none;">x</a>
           <a href="/news/update?index=<%= i %>" style="text-decoration: none;">
             <%= news[i].Titre %>
           </a>
@@ -21,7 +21,7 @@
     </td>
     <td valign="top">
       <form method="POST" action="/news/add">
-        <input type="hidden" name="ID" value="<%= newNews.ID %>" />
+        <input type="hidden" name="_id" value="<%= newNews._id %>" />
         Titre</br><input type="text" name="Titre" value="<%= newNews.Titre %>" />
         <span style="color: red;">
           <% if(errors && errors.Titre) { %>
